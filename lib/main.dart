@@ -67,6 +67,40 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
     ];
   }
 
+  void _addInvestmentFund() {
+    final nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Adicionar Novo Fundo'),
+          content: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(hintText: "Nome do Fundo"),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameController.text;
+                if (name.isNotEmpty) {
+                  setState(() => myFunds.add(InvestmentFund(name: name)));
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Adicionar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,6 +128,11 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
             ),
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addInvestmentFund,
+        tooltip: 'Adicionar Fundo',
+        child: const Icon(Icons.add),
       ),
     );
   }
