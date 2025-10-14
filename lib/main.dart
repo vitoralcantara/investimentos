@@ -111,20 +111,40 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
         itemCount: myFunds.length,
         itemBuilder: (context, index) {
           final fund = myFunds[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              title: Text(fund.name),
-              subtitle: const Text("Toque para ver detalhes"),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => InvestmentDetailScreen(fund: fund),
-                  ),
-                );
-              },
+          return Dismissible(
+            key: ObjectKey(fund),
+            direction: DismissDirection.endToStart,
+            onDismissed: (direction) {
+              final removedFundName = fund.name;
+              setState(() {
+                myFunds.removeAt(index);
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Fundo '$removedFundName' removido.")),
+              );
+            },
+            background: Container(
+              color: Colors.red,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20.0),
+              child: const Icon(Icons.delete, color: Colors.white),
+            ),
+            child: Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ListTile(
+                title: Text(fund.name),
+                subtitle: const Text("Toque para ver detalhes"),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InvestmentDetailScreen(fund: fund),
+                    ),
+                  );
+                },
+              ),
             ),
           );
         },
