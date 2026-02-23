@@ -1,7 +1,7 @@
 // lib/google_drive_service.dart
 
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
@@ -23,7 +23,13 @@ class _GoogleAuthClient extends http.BaseClient {
 }
 
 class GoogleDriveService {
+  // TODO: Substitua pelo seu Client ID para Web gerado no Google Cloud Console.
+  static const _webClientId = '331113310350-b8h2tulln1kp81vpu3q9pgoptrba6d5t.apps.googleusercontent.com';
+
   final GoogleSignIn _googleSignIn = GoogleSignIn(
+    // O clientId só é necessário para a plataforma web.
+    // Para Android e iOS, ele é obtido a partir dos arquivos de configuração nativos.
+    clientId: kIsWeb ? _webClientId : null,
     scopes: [drive.DriveApi.driveAppdataScope], // Escopo para a pasta de dados do aplicativo
   );
 

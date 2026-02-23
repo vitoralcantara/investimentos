@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Investimentos",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--web-port=8080", // Opcional: fixa a porta
+                "--chrome-option=--user-data-dir=/Users/vitoralmeida/Library/Application Support/Google/Chrome"
+            ]
+        }
+    ]
+}
