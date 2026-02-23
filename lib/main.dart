@@ -1,6 +1,7 @@
 // lib/main.dart
 
 import 'package:flutter/material.dart';
+import 'google_drive_service.dart';
 import 'models.dart';
 import 'investment_detail_screen.dart';
 
@@ -33,6 +34,9 @@ class InvestmentsScreen extends StatefulWidget {
 class _InvestmentsScreenState extends State<InvestmentsScreen> {
   // --- DADOS DE EXEMPLO ---
   // Agora temos uma lista de fundos
+  final _driveService = GoogleDriveService();
+  bool _isLoading = false;
+
   late List<InvestmentFund> myFunds;
 
   @override
@@ -101,54 +105,119 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
     );
   }
 
+  void _backupData() async {
+    setState(() => _isLoading = true);
+    final success = await _driveService.backup(myFunds);
+    // Garante que o widget ainda está na árvore antes de atualizar o estado
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success
+            ? 'Backup realizado com sucesso no Google Drive!'
+            : 'Falha ao realizar o backup.'),
+      ),
+    );
+  }
+
+  void _restoreData() async {
+    setState(() => _isLoading = true);
+    final funds = await _driveService.restore();
+    // Garante que o widget ainda está na árvore
+    if (!mounted) return;
+
+    if (funds != null) {
+      setState(() {
+        myFunds = funds;
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Dados restaurados com sucesso!')),
+      );
+    } else {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('Nenhum backup encontrado ou falha na restauração.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Minha Carteira'),
+        actions: [
+          IconButton(
+              icon: const Icon(Icons.cloud_upload),
+              onPressed: _isLoading ? null : _backupData,
+              tooltip: 'Backup no Google Drive'),
+          IconButton(
+              icon: const Icon(Icons.cloud_download),
+              onPressed: _isLoading ? null : _restoreData,
+              tooltip: 'Restaurar do Google Drive'),
+        ],
       ),
-      body: ListView.builder(
-        itemCount: myFunds.length,
-        itemBuilder: (context, index) {
-          final fund = myFunds[index];
-          return Dismissible(
-            key: ObjectKey(fund),
-            direction: DismissDirection.endToStart,
-            onDismissed: (direction) {
-              final removedFundName = fund.name;
-              setState(() {
-                myFunds.removeAt(index);
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Fundo '$removedFundName' removido.")),
-              );
-            },
-            background: Container(
-              color: Colors.red,
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.only(right: 20.0),
-              child: const Icon(Icons.delete, color: Colors.white),
-            ),
-            child: Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ListTile(
-                title: Text(fund.name),
-                subtitle: const Text("Toque para ver detalhes"),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => InvestmentDetailScreen(fund: fund),
-                    ),
-                  );
-                },
+      body: _isLoading
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text("Acessando Google Drive..."),
+                ],
               ),
+            )
+          : ListView.builder(
+              itemCount: myFunds.length,
+              itemBuilder: (context, index) {
+                final fund = myFunds[index];
+                return Dismissible(
+                  key: ObjectKey(fund),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) {
+                    final removedFundName = fund.name;
+                    setState(() {
+                      myFunds.removeAt(index);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text("Fundo '$removedFundName' removido.")),
+                    );
+                  },
+                  background: Container(
+                    color: Colors.red,
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20.0),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  child: Card(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ListTile(
+                      title: Text(fund.name),
+                      subtitle: const Text("Toque para ver detalhes"),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                InvestmentDetailScreen(fund: fund),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addInvestmentFund,
         tooltip: 'Adicionar Fundo',
